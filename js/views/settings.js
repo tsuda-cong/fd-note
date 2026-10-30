@@ -105,10 +105,8 @@ export async function render(el) {
   loadMunicipalities().then((muni) => {
     const last = loadLastPlace();
     favCard.querySelector('.fav-add').innerHTML = `
-      ${addressFieldsHtml(muni, { pref: last?.pref || '', city: '' }, [], { label: '追加する市区町村' })}
+      ${addressFieldsHtml(muni, { pref: last?.pref || '', city: '' }, [], { label: '追加する市区町村', detail: false })}
       <button type="button" class="btn btn-block" data-action="fav-add">追加する</button>`;
-    // 町名以下の欄はここでは使わない
-    favCard.querySelector('[name="address"]').hidden = true;
     bindAddressFields(favCard, muni);
     favCard.querySelector('[data-action="fav-add"]').addEventListener('click', async () => {
       const { pref, city } = readAddressFields(favCard);

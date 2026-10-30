@@ -23,6 +23,9 @@ js/backup.js          バックアップの作成と読み込み
 js/address.js         住所入力（都道府県・市区町村の選択、町名以下の自由入力）
 data/municipalities.json  都道府県・市区町村の一覧（総務省「全国地方公共団体コード」令和6年1月1日更新をもとに作成）
 data/build_municipalities.py  上の JSON を作り直すスクリプト（アプリの動作には使わない）
+towns/index.json      町名データを持つ市区町村の一覧（対応地域の設定）
+towns/<コード>.json   市区町村ごとの町名一覧（国土交通省「位置参照情報」をもとに作成し、市の公式文書と照合）
+data/build_towns.py   町名 JSON を作るスクリプト（アプリの動作には使わない）
 js/ui.js              画面の共通部品
 js/views/*.js         画面ごとの処理
 vendor/leaflet/       地図ライブラリ Leaflet 1.9.4（BSD-2-Clause、LICENSE 同梱）
@@ -44,6 +47,15 @@ icons/                アプリのアイコン
 3. ストア（表）や索引を増やすときは、`DB_VERSION` を上げて `structureUpgrades` に追記する
 
 古いバックアップファイルを読み込んだときも、同じ変換が通ります。
+
+## 町名を選べる市区町村を増やすとき
+
+出典表示: 町名データは「位置参照情報」（国土交通省）を加工して作成している（アプリの「使い方」にも表示）。
+
+1. 国土交通省「位置参照情報」（大字・町丁目レベル）の CSV と、その市の公式な町名一覧（テキストにしたもの）を用意する
+2. `python data/build_towns.py <CSV> <市区町村コード> towns/<市区町村コード>.json <公式文書.txt> "<入手元の説明>"` を実行し、「公式文書に見当たらない町名」が出たら確かめる
+3. `towns/index.json` の `cities` に1行足す（例 `{ "pref": "大阪府", "city": "寝屋川市", "file": "27215.json" }`）
+4. `sw.js` の `VERSION` を上げて push する（町名 JSON は index.json を見て自動でキャッシュされる）
 
 ## 画面を追加するとき
 

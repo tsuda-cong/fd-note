@@ -9,7 +9,7 @@ import { nowStamp } from './dates.js';
 
 const DB_NAME = 'fd-note-db';
 const DB_VERSION = 1;
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 // 訪問先ごとの記録（personId を持つ）
 export const PERSON_STORES = ['visits', 'plans', 'lessonSchedules', 'lessonRecords'];
@@ -68,6 +68,11 @@ const dataMigrations = {
       delete data.settings.towns;
       data.settings.favoriteCities ??= [];
     }
+    return data;
+  },
+  // 版4: 町名(town)を「番地・建物名など」(address) と分けて持つ。これまでの住所は address にそのまま残す。
+  4: (data) => {
+    for (const p of data.people) p.town ??= '';
     return data;
   },
 };

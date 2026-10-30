@@ -267,6 +267,32 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary); outlin
   text-decoration: underline;
 }
 select:disabled { opacity: 0.6; }
+.town-list {
+  margin-top: 4px;
+  max-height: 40vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 2px solid var(--primary);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.town-list[hidden] { display: none; }
+.town-list button {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  padding: 8px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+}
+.town-list button:last-child { border-bottom: 0; }
+.town-list button:active { background: var(--surface-2); }
+.town-empty { margin: 0; padding: 10px 14px; color: var(--muted); }
+.town-hint { margin: 4px 0 0; }
 .row2 { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; }
 .hm { display: flex; align-items: center; gap: 8px; }
 .hm select, .hm input { width: 6em; flex: 0 0 auto; }

@@ -49,9 +49,9 @@ export function displayName(p) {
   return (p.name || '').trim() || '（名前未記入）';
 }
 
-// 都道府県・市区町村・町名以下をつなげた住所（以前の自由入力の住所は町名以下にそのまま入っている）
+// 都道府県・市区町村・町名・番地などをつなげた住所（以前の自由入力の住所は address にそのまま入っている）
 export function fullAddress(p) {
-  return `${p.pref || ''}${p.city || ''}${p.address || ''}`;
+  return `${p.pref || ''}${p.city || ''}${p.town || ''}${p.address || ''}`;
 }
 
 // 「都道府県＋市区町村」の表示名（一覧の絞り込みなどに使う）

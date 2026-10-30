@@ -50,7 +50,7 @@ const sorters = {
   // 市区町村ごとにまとめ、その中は町名・番地の順（番地の数字は数として比べる）。住所なしは最後。
   address: (a, b) => (!fullAddress(a) - !fullAddress(b))
     || placeLabel(a).localeCompare(placeLabel(b), 'ja')
-    || (a.address || '').localeCompare(b.address || '', 'ja', { numeric: true }),
+    || `${a.town || ''}${a.address || ''}`.localeCompare(`${b.town || ''}${b.address || ''}`, 'ja', { numeric: true }),
 };
 
 const matchers = {

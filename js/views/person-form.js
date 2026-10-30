@@ -31,8 +31,8 @@ export async function render(el, { params: [id] }) {
   ]);
   // 編集ではその人の住所、新しい訪問では最後に選んだ都道府県・市区町村を初期値にする
   const initial = editing
-    ? { pref: p.pref || '', city: p.city || '', address: p.address || '' }
-    : { ...(loadLastPlace() || {}), address: '' };
+    ? { pref: p.pref || '', city: p.city || '', town: p.town || '', address: p.address || '' }
+    : { ...(loadLastPlace() || {}), town: '', address: '' };
 
   el.innerHTML = `
     <form class="card" data-form="person" autocomplete="off">

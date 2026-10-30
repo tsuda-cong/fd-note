@@ -3,9 +3,10 @@
 // 更新の手順:
 //   1. ファイルを直したら、下の VERSION を上げる（例 1.0.0 → 1.0.1）
 //   2. ファイルを増やしたときは ASSETS にも足す
+//      （町名データ towns/*.json は towns/index.json に載っているものを自動で保存するので、ここに足さなくてよい）
 //   3. push すると、利用者の画面に「新しい版があります」と出て切り替わる
 
-const VERSION = '1.2.0';
+const VERSION = '1.3.0';
 const CACHE_PREFIX = 'fd-note-';
 const CACHE = `${CACHE_PREFIX}v${VERSION}`;
 
@@ -47,10 +48,18 @@ const ASSETS = [
   './icons/icon-maskable-512.png',
 ];
 
+// 町名データを持つ市区町村の一覧。ここに載っている towns/*.json も保存する。
+const TOWN_INDEX = './towns/index.json';
+
+const fresh = (url) => new Request(url, { cache: 'reload' });
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(ASSETS.map((url) => new Request(url, { cache: 'reload' })))),
-  );
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    await cache.addAll([...ASSETS, TOWN_INDEX].map(fresh));
+    const index = await (await cache.match(TOWN_INDEX)).json();
+    await cache.addAll(index.cities.map((c) => fresh(`./towns/${c.file}`)));
+  })());
 });
 
 self.addEventListener('activate', (event) => {
