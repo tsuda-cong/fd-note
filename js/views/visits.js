@@ -2,7 +2,7 @@
 
 import { loadAll, getSettings } from '../db.js';
 import { formatDate, formatDateTime, relativeLabel, sortKey } from '../dates.js';
-import { summarizePeople, displayName, STATUS } from '../model.js';
+import { summarizePeople, displayName, fullAddress, STATUS } from '../model.js';
 import { setTitle, esc, options } from '../ui.js';
 
 // 並び替えと絞り込みの選択は、この端末に覚えておく（キーは fd-note: で始める）
@@ -12,6 +12,7 @@ const SORTS = [
   ['recent', '最終訪問が新しい順'],
   ['oldest', '最終訪問が古い順'],
   ['next', '次回の予定が近い順'],
+  ['town', '町名順（町名リストの順）'],
   ['name', '名前順'],
 ];
 const FILTERS = [
@@ -21,11 +22,13 @@ const FILTERS = [
   ['stale', 'しばらく訪問なし'],
 ];
 
+const DEFAULT_PREFS = { sort: 'recent', filter: 'all', town: '' };
+
 function loadPrefs() {
   try {
-    return { sort: 'recent', filter: 'all', ...JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') };
+    return { ...DEFAULT_PREFS, ...JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') };
   } catch {
-    return { sort: 'recent', filter: 'all' };
+    return { ...DEFAULT_PREFS };
   }
 }
 
@@ -46,6 +49,18 @@ const sorters = {
   name: (a, b) => displayName(a).localeCompare(displayName(b), 'ja'),
 };
 
+// 町名リストの順に並べ、同じ町の中は番地順。リストにない町名は後ろ、町名なしは最後。
+function townSorter(towns) {
+  const rank = (p) => {
+    if (!p.town) return towns.length + 1;
+    const i = towns.indexOf(p.town);
+    return i < 0 ? towns.length : i;
+  };
+  return (a, b) => rank(a) - rank(b)
+    || (a.town || '').localeCompare(b.town || '', 'ja')
+    || (a.address || '').localeCompare(b.address || '', 'ja', { numeric: true });
+}
+
 const matchers = {
   all: () => true,
   student: (p) => p.isStudent,
@@ -62,7 +77,7 @@ function rowHtml(p) {
         <div class="li-title">${esc(displayName(p))}
           ${p.isStudent ? '<span class="badge student">レッスン生</span>' : ''}
           ${p.lat == null ? '<span class="badge">位置なし</span>' : ''}</div>
-        ${p.address ? `<div class="li-sub">${esc(p.address)}</div>` : ''}
+        ${fullAddress(p) ? `<div class="li-sub">${esc(fullAddress(p))}</div>` : ''}
         <div class="li-sub">${last}</div>
         ${p.nextPlan ? `<div class="li-sub next">次回 ${esc(formatDateTime(p.nextPlan.date, p.nextPlan.time))}</div>` : ''}
       </div>
@@ -73,9 +88,13 @@ export async function render(el) {
   setTitle('訪問');
   const [all, settings] = await Promise.all([loadAll(), getSettings()]);
   const people = summarizePeople(all, settings);
+  const sortBy = { ...sorters, town: townSorter(settings.towns) };
+  // 絞り込み用の町名: 町名リストの順に、リストにない町名（登録済みの訪問先のもの）を後ろに足す
+  const towns = [...new Set([...settings.towns, ...people.map((p) => p.town).filter(Boolean)])];
   const prefs = loadPrefs();
-  if (!sorters[prefs.sort]) prefs.sort = 'recent';
+  if (!sortBy[prefs.sort]) prefs.sort = 'recent';
   if (!matchers[prefs.filter]) prefs.filter = 'all';
+  if (!towns.includes(prefs.town)) prefs.town = '';
 
   el.innerHTML = `
     <a class="btn btn-primary btn-block btn-big" href="#/visit/new">＋ 新しい訪問を記録</a>
@@ -85,6 +104,8 @@ export async function render(el) {
       <div class="chips" role="group" aria-label="絞り込み">
         ${FILTERS.map(([v, l]) => `<button type="button" class="chip ${prefs.filter === v ? 'on' : ''}" data-filter="${v}">${l}</button>`).join('')}
       </div>
+      ${towns.length ? `<label class="field inline"><span>町名</span>
+        <select class="town">${options([['', 'すべての町'], ...towns.map((t) => [t, t])], prefs.town)}</select></label>` : ''}
       <label class="field inline"><span>並び順</span><select class="sort">${options(SORTS, prefs.sort)}</select></label>
     </div>
     <p class="muted small count"></p>
@@ -104,8 +125,9 @@ export async function render(el) {
     const q = searchEl.value.trim();
     const rows = people
       .filter(matchers[prefs.filter])
-      .filter((p) => !q || [p.name, p.address, p.memo].some((s) => (s || '').includes(q)))
-      .sort(sorters[prefs.sort]);
+      .filter((p) => !prefs.town || p.town === prefs.town)
+      .filter((p) => !q || [p.name, fullAddress(p), p.memo].some((s) => (s || '').includes(q)))
+      .sort(sortBy[prefs.sort]);
     countEl.textContent = `${rows.length}件 ／ 全${people.length}件`;
     listEl.innerHTML = rows.length ? rows.map(rowHtml).join('') : '<p class="muted">当てはまる訪問先はありません</p>';
   }
@@ -120,6 +142,11 @@ export async function render(el) {
   });
   el.querySelector('.sort').addEventListener('change', (e) => {
     prefs.sort = e.target.value;
+    savePrefs(prefs);
+    draw();
+  });
+  el.querySelector('.town')?.addEventListener('change', (e) => {
+    prefs.town = e.target.value;
     savePrefs(prefs);
     draw();
   });

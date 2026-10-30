@@ -104,6 +104,25 @@ export async function copyText(text) {
   }
 }
 
+// 同梱のライブラリ（vendor/ の通常スクリプト）を必要になったときに読み込み、作られた global を返す
+const scriptLoads = new Map();
+export function loadScript(src, globalName) {
+  if (window[globalName]) return Promise.resolve(window[globalName]);
+  if (!scriptLoads.has(src)) {
+    scriptLoads.set(src, new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = () => resolve(window[globalName]);
+      s.onerror = () => {
+        scriptLoads.delete(src);
+        reject(new Error('部品を読み込めませんでした'));
+      };
+      document.head.append(s);
+    }));
+  }
+  return scriptLoads.get(src);
+}
+
 // 日付と時刻の入力欄（2つ並び）
 export function dateTimeFields({ date = todayStr(), time = nowTimeStr(), dateName = 'date', timeName = 'time',
   dateLabel = '日付', timeLabel = '時刻', required = true } = {}) {

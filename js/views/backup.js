@@ -88,7 +88,7 @@ export async function render(el) {
       { label: '今のデータを消して置き換える', value: 'replace', cls: 'btn-danger' },
       { label: 'やめる', value: null },
     ], {
-      detail: `${parsed.exportedAt ? `書き出した日：${formatDate(parsed.exportedAt.slice(0, 10))}\n` : ''}中身：${lines.join('、') || '記録なし'}\n\n「追加」では、同じ記録は1つにまとめます。設定は今のままです。`,
+      detail: `${parsed.exportedAt ? `書き出した日：${formatDate(parsed.exportedAt.slice(0, 10))}\n` : ''}中身：${lines.join('、') || '記録なし'}\n\n「追加」では、同じ記録は1つにまとめます。設定は今のままです（町名リストだけは、ファイルの町名も足します）。`,
     });
     if (!mode) return;
     if (mode === 'replace' && !(await confirmDialog('今のデータをすべて消して、ファイルの内容に置き換えます。よろしいですか？', {

@@ -1,6 +1,6 @@
 // バックアップファイル（JSON）の作成と読み込み
 
-import { loadAll, importSnapshot, setMeta, migrateData, SCHEMA_VERSION, DATA_STORES } from './db.js';
+import { loadAll, importSnapshot, setMeta, migrateData, getSettings, saveSettings, SCHEMA_VERSION, DATA_STORES } from './db.js';
 import { nowStamp } from './dates.js';
 
 export const STORE_LABELS = {
@@ -54,4 +54,9 @@ export function parseBackup(text) {
 
 export async function restoreBackup(data, mode) {
   await importSnapshot(data, mode);
+  // 「追加」では設定は今のままにするが、町名リストだけはファイルの分も足す
+  if (mode === 'merge' && data.settings?.towns?.length) {
+    const { towns } = await getSettings();
+    await saveSettings({ towns: [...new Set([...towns, ...data.settings.towns])] });
+  }
 }

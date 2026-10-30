@@ -2,7 +2,7 @@
 
 import { loadAll, getSettings, put, remove, write, deletePerson, newRecord } from '../db.js';
 import { todayStr, nowTimeStr, isDateStr, isTimeStr, formatDate, formatDateTime, relativeLabel, nowStamp, WEEKDAYS } from '../dates.js';
-import { summarizePeople, displayName, genderLabel, STATUS } from '../model.js';
+import { summarizePeople, displayName, fullAddress, genderLabel, STATUS } from '../model.js';
 import { setTitle, esc, escLines, toast, confirmDialog, refresh, dateTimeFields, options } from '../ui.js';
 
 const WEEKDAY_OPTS = WEEKDAYS.map((w, i) => [i, `${w}曜日`]);
@@ -69,7 +69,7 @@ export async function render(el, { params: [id] }) {
           </div>
         </div>
       </div>
-      ${p.address ? `<p class="addr">${escLines(p.address)}</p>` : ''}
+      ${fullAddress(p) ? `<p class="addr">${escLines(fullAddress(p))}</p>` : ''}
       ${p.memo ? `<p class="memo">${escLines(p.memo)}</p>` : ''}
       <p class="muted small">最終訪問：${p.lastVisit ? `${formatDate(p.lastVisit.date)}（${relativeLabel(p.lastVisit.date, today)}）` : 'なし'}
         ／ 地図の位置：${p.lat != null ? '指定済み' : '未指定'}</p>

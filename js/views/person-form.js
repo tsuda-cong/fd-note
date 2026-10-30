@@ -1,13 +1,34 @@
 // 新しい訪問の入力 ／ 訪問先の基本情報の編集
 
-import { get, put, write, newRecord } from '../db.js';
+import { get, put, write, newRecord, getSettings } from '../db.js';
 import { isDateStr, isTimeStr, nowStamp } from '../dates.js';
 import { GENDERS } from '../model.js';
-import { setTitle, esc, toast, dateTimeFields } from '../ui.js';
+import { setTitle, esc, toast, dateTimeFields, options } from '../ui.js';
+
+// 新しい訪問では、前回選んだ町名を最初から選んでおく（同じ町を続けて回ることが多いため）
+const LAST_TOWN_KEY = 'fd-note:last-town';
 
 function genderRadios(selected) {
   return GENDERS.map((g) => `
     <label><input type="radio" name="gender" value="${g.value}" ${g.value === selected ? 'checked' : ''}><span>${g.label}</span></label>`).join('');
+}
+
+function townSelect(towns, selected) {
+  // リストから外した町名でも、登録済みの訪問先のものは消さずに選べるようにする
+  const list = selected && !towns.includes(selected) ? [...towns, selected] : towns;
+  if (!list.length) {
+    return '<p class="muted small">設定の「町名リスト」に町名を登録すると、ここで選べます。</p>';
+  }
+  return `<select name="town" aria-label="町名">${options([['', '（町名を選ぶ）'], ...list.map((t) => [t, t])], selected)}</select>`;
+}
+
+function lastTown(towns) {
+  try {
+    const t = localStorage.getItem(LAST_TOWN_KEY) || '';
+    return towns.includes(t) ? t : '';
+  } catch {
+    return '';
+  }
 }
 
 const text = (fd, name) => String(fd.get(name) || '').trim();
@@ -21,6 +42,7 @@ export async function render(el, { params: [id] }) {
     return;
   }
   setTitle(editing ? '訪問先を編集' : '新しい訪問', editing ? `#/person/${id}` : '#/visits');
+  const { towns } = await getSettings();
 
   el.innerHTML = `
     <form class="card" data-form="person" autocomplete="off">
@@ -29,8 +51,10 @@ export async function render(el, { params: [id] }) {
         <input type="text" name="name" value="${esc(p?.name)}" placeholder="わかる範囲で（空欄でも可）"></label>
       <fieldset class="field"><legend>性別</legend>
         <div class="segmented">${genderRadios(p?.gender ?? '')}</div></fieldset>
-      <label class="field"><span>住所</span>
-        <textarea name="address" rows="2">${esc(p?.address)}</textarea></label>
+      <fieldset class="field stack"><legend>住所</legend>
+        ${townSelect(towns, editing ? p.town || '' : lastTown(towns))}
+        <textarea name="address" rows="2" aria-label="番地・建物名など" placeholder="番地・建物名など">${esc(p?.address)}</textarea>
+      </fieldset>
       <label class="field"><span>メモ</span>
         <textarea name="memo" rows="3" placeholder="話した内容、関心など">${esc(p?.memo)}</textarea></label>
       ${editing ? '' : `
@@ -50,6 +74,7 @@ export async function render(el, { params: [id] }) {
     const fields = {
       name: text(fd, 'name'),
       gender: text(fd, 'gender'),
+      town: text(fd, 'town'),
       address: text(fd, 'address'),
       memo: text(fd, 'memo'),
     };
@@ -76,6 +101,9 @@ export async function render(el, { params: [id] }) {
       s('visits').put(visit);
       if (plan) s('plans').put(plan);
     });
+    if (fields.town) {
+      try { localStorage.setItem(LAST_TOWN_KEY, fields.town); } catch { /* 覚えられなくても動作には影響しない */ }
+    }
     toast('保存しました');
     const toMap = e.submitter?.value === 'map';
     location.replace(toMap ? `#/map?pick=${person.id}` : `#/person/${person.id}`);

@@ -49,6 +49,11 @@ export function displayName(p) {
   return (p.name || '').trim() || '（名前未記入）';
 }
 
+// 町名と番地をつなげた住所
+export function fullAddress(p) {
+  return `${p.town || ''}${p.address || ''}`;
+}
+
 function groupBy(list, key) {
   const m = new Map();
   for (const r of list) {

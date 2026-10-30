@@ -23,6 +23,7 @@ js/backup.js          バックアップの作成と読み込み
 js/ui.js              画面の共通部品
 js/views/*.js         画面ごとの処理
 vendor/leaflet/       地図ライブラリ Leaflet 1.9.4（BSD-2-Clause、LICENSE 同梱）
+vendor/qrcode-generator/  QR コード作成 qrcode-generator 1.4.4（MIT、LICENSE 同梱）
 icons/                アプリのアイコン
 ```
 

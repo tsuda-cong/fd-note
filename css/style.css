@@ -252,6 +252,7 @@ select {
 textarea { min-height: 4.5em; resize: vertical; line-height: 1.5; }
 input:focus, select:focus, textarea:focus { border-color: var(--primary); outline: none; }
 
+.stack > * + * { margin-top: 8px; }
 .row2 { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; }
 .hm { display: flex; align-items: center; gap: 8px; }
 .hm select, .hm input { width: 6em; flex: 0 0 auto; }
@@ -452,6 +453,10 @@ table.calc tr.carry th, table.calc tr.carry td { color: var(--primary); font-wei
 .link-list a small { color: var(--muted); font-weight: normal; margin-left: auto; }
 .link-list a span { margin-left: auto; color: var(--muted); font-size: 1.3rem; }
 .link-list a small + span { margin-left: 4px; }
+
+.qr { width: min(240px, 70vw); margin: 4px auto 8px; background: #fff; border-radius: 12px; }
+.qr svg { display: block; width: 100%; height: auto; }
+.qr-url { text-align: center; font-weight: 700; overflow-wrap: anywhere; }
 
 .prose ol, .prose ul { padding-left: 1.4em; margin: 0 0 0.6rem; }
 .prose li { margin-bottom: 0.35rem; }

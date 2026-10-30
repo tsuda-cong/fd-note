@@ -2,7 +2,7 @@
 
 import { loadAll, getSettings, getMeta } from '../db.js';
 import { todayStr, addDays, weekdayOf, formatDate, formatDateTime, daysBetween, currentYm, formatYm, sortKey } from '../dates.js';
-import { summarizePeople, displayName, typeInfo } from '../model.js';
+import { summarizePeople, displayName, fullAddress, typeInfo } from '../model.js';
 import { monthSummary, formatMinutes } from '../calc.js';
 import { setTitle, esc } from '../ui.js';
 
@@ -28,7 +28,7 @@ function itemHtml(it) {
   const tag = it.kind === 'lesson'
     ? '<span class="tag tag-lesson">レッスン</span>'
     : '<span class="tag tag-visit">訪問</span>';
-  const sub = [it.memo, it.person.address].filter(Boolean).join(' ／ ');
+  const sub = [it.memo, fullAddress(it.person)].filter(Boolean).join(' ／ ');
   return `
     <a class="list-item" href="#/person/${esc(it.person.id)}">
       ${tag}
