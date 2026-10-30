@@ -54,9 +54,12 @@ export function parseBackup(text) {
 
 export async function restoreBackup(data, mode) {
   await importSnapshot(data, mode);
-  // 「追加」では設定は今のままにするが、町名リストだけはファイルの分も足す
-  if (mode === 'merge' && data.settings?.towns?.length) {
-    const { towns } = await getSettings();
-    await saveSettings({ towns: [...new Set([...towns, ...data.settings.towns])] });
+  // 「追加」では設定は今のままにするが、よく使う市区町村だけはファイルの分も足す
+  const incoming = data.settings?.favoriteCities || [];
+  if (mode === 'merge' && incoming.length) {
+    const { favoriteCities } = await getSettings();
+    const key = (f) => `${f.pref}\n${f.city}`;
+    const have = new Set(favoriteCities.map(key));
+    await saveSettings({ favoriteCities: [...favoriteCities, ...incoming.filter((f) => !have.has(key(f)))] });
   }
 }

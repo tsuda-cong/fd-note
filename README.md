@@ -20,6 +20,9 @@ js/dates.js           日付・時刻（ローカル時間の文字列で扱う�
 js/calc.js            月の集計・繰り越し・レッスン件数
 js/model.js           区分・訪問先の状態（ピンの色）
 js/backup.js          バックアップの作成と読み込み
+js/address.js         住所入力（都道府県・市区町村の選択、町名以下の自由入力）
+data/municipalities.json  都道府県・市区町村の一覧（総務省「全国地方公共団体コード」令和6年1月1日更新をもとに作成）
+data/build_municipalities.py  上の JSON を作り直すスクリプト（アプリの動作には使わない）
 js/ui.js              画面の共通部品
 js/views/*.js         画面ごとの処理
 vendor/leaflet/       地図ライブラリ Leaflet 1.9.4（BSD-2-Clause、LICENSE 同梱）

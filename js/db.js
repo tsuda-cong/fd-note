@@ -9,7 +9,7 @@ import { nowStamp } from './dates.js';
 
 const DB_NAME = 'fd-note-db';
 const DB_VERSION = 1;
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 // 訪問先ごとの記録（personId を持つ）
 export const PERSON_STORES = ['visits', 'plans', 'lessonSchedules', 'lessonRecords'];
@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS = {
   backupReminderDays: 14,  // 最終バックアップからこの日数以上で促す
   theme: 'auto',           // 'auto' | 'light' | 'dark'
   mapCenter: null,         // { lat, lng, zoom }
-  towns: [],               // 町名リスト（利用者が設定で登録した順）
+  favoriteCities: [],      // よく使う市区町村 [{ pref, city }]（登録した順）
 };
 
 // ストア構成の変更。キーの版へ上げるときに実行される。
@@ -45,7 +45,7 @@ const structureUpgrades = {
 // データの形の変換。版 n-1 → 版 n の変換を n をキーにして登録する。
 // data はバックアップの data 部分と同じ形 { settings, serviceTimes: [...], people: [...], ... }。
 // 例:
-//   3: (data) => {
+//   4: (data) => {
 //     for (const p of data.people) p.phone ??= '';
 //     return data;
 //   },
@@ -53,6 +53,21 @@ const dataMigrations = {
   // 版2: 訪問先に町名（town）を追加。これまでの住所は「番地・建物名など」(address) としてそのまま残す。
   2: (data) => {
     for (const p of data.people) p.town ??= '';
+    return data;
+  },
+  // 版3: 住所を「都道府県(pref)・市区町村(city)・町名以下(address)」に。
+  //   町名リストはやめ、町名(town)は町名以下の先頭につなげる。これまでの住所は町名以下にそのまま残る。
+  3: (data) => {
+    for (const p of data.people) {
+      p.pref ??= '';
+      p.city ??= '';
+      p.address = `${p.town || ''}${p.address || ''}`;
+      delete p.town;
+    }
+    if (data.settings) {
+      delete data.settings.towns;
+      data.settings.favoriteCities ??= [];
+    }
     return data;
   },
 };

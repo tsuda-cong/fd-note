@@ -253,6 +253,20 @@ textarea { min-height: 4.5em; resize: vertical; line-height: 1.5; }
 input:focus, select:focus, textarea:focus { border-color: var(--primary); outline: none; }
 
 .stack > * + * { margin-top: 8px; }
+.link-btn {
+  display: block;
+  min-height: 40px;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-align: left;
+  text-decoration: underline;
+}
+select:disabled { opacity: 0.6; }
 .row2 { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; }
 .hm { display: flex; align-items: center; gap: 8px; }
 .hm select, .hm input { width: 6em; flex: 0 0 auto; }

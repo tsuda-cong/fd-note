@@ -5,7 +5,7 @@
 //   2. ファイルを増やしたときは ASSETS にも足す
 //   3. push すると、利用者の画面に「新しい版があります」と出て切り替わる
 
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 const CACHE_PREFIX = 'fd-note-';
 const CACHE = `${CACHE_PREFIX}v${VERSION}`;
 
@@ -14,6 +14,8 @@ const ASSETS = [
   './index.html',
   './manifest.json',
   './css/style.css',
+  './data/municipalities.json',
+  './js/address.js',
   './js/app.js',
   './js/backup.js',
   './js/calc.js',
