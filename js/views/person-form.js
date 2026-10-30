@@ -25,14 +25,14 @@ export async function render(el, { params: [id] }) {
     return;
   }
   setTitle(editing ? '訪問先を編集' : '新しい訪問', editing ? `#/person/${id}` : '#/visits');
-  const [{ favoriteCities }, muni] = await Promise.all([
+  const [{ favoriteCities, defaultPlace }, muni] = await Promise.all([
     getSettings(),
     loadMunicipalities().catch((e) => { toast(e.message); return NO_LIST; }),
   ]);
-  // 編集ではその人の住所、新しい訪問では最後に選んだ都道府県・市区町村を初期値にする
+  // 編集ではその人の住所。新しい訪問では、設定の「住所の初期値」、なければ最後に選んだ都道府県・市区町村
   const initial = editing
     ? { pref: p.pref || '', city: p.city || '', town: p.town || '', address: p.address || '' }
-    : { ...(loadLastPlace() || {}), town: '', address: '' };
+    : { ...(defaultPlace || loadLastPlace() || {}), town: '', address: '' };
 
   el.innerHTML = `
     <form class="card" data-form="person" autocomplete="off">

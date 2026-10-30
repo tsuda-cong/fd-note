@@ -25,6 +25,7 @@ export const DEFAULT_SETTINGS = {
   theme: 'auto',           // 'auto' | 'light' | 'dark'
   mapCenter: null,         // { lat, lng, zoom }
   favoriteCities: [],      // よく使う市区町村 [{ pref, city }]（登録した順）
+  defaultPlace: null,      // 新しい訪問の住所の初期値 { pref, city }（null なら前回選んだもの）
 };
 
 // ストア構成の変更。キーの版へ上げるときに実行される。

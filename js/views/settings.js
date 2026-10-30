@@ -48,6 +48,14 @@ export async function render(el) {
         <span class="hm"><input type="number" name="backupReminderDays" min="1" max="999" inputmode="numeric" value="${s.backupReminderDays}"><span>日</span></span></label>
     </form>
 
+    <section class="card default-place-card">
+      <h2>住所の初期値</h2>
+      <p class="muted small">新しい訪問を入れるとき、最初から選んでおく都道府県・市区町村です。決めていないときは、前回選んだものが選ばれます。</p>
+      <p>いまの初期値：<strong>${s.defaultPlace ? `${esc(s.defaultPlace.pref)}${esc(s.defaultPlace.city)}` : '指定なし（前回選んだもの）'}</strong></p>
+      <div class="default-place-set"></div>
+      ${s.defaultPlace ? '<button type="button" class="btn btn-block btn-ghost-danger" data-action="default-clear">初期値の指定をやめる</button>' : ''}
+    </section>
+
     <section class="card fav-card">
       <h2>よく使う市区町村</h2>
       <p class="muted small">登録すると、訪問の住所を入れるときに一番上に出て、1回押すだけで選べます。</p>
@@ -91,6 +99,30 @@ export async function render(el) {
     });
     applyTheme(next.theme);
     toast('保存しました');
+  });
+
+  // 住所の初期値: 都道府県 → 市区町村を選んで決める
+  const defCard = el.querySelector('.default-place-card');
+  defCard.querySelector('[data-action="default-clear"]')?.addEventListener('click', async () => {
+    await saveSettings({ defaultPlace: null });
+    toast('初期値の指定をやめました');
+    refresh();
+  });
+  loadMunicipalities().then((muni) => {
+    const cur = s.defaultPlace || loadLastPlace() || { pref: '', city: '' };
+    defCard.querySelector('.default-place-set').innerHTML = `
+      ${addressFieldsHtml(muni, cur, [], { label: '初期値にする市区町村', detail: false })}
+      <button type="button" class="btn btn-block" data-action="default-set">この市区町村を初期値にする</button>`;
+    bindAddressFields(defCard, muni);
+    defCard.querySelector('[data-action="default-set"]').addEventListener('click', async () => {
+      const { pref, city } = readAddressFields(defCard);
+      if (!pref || !city) return toast('都道府県と市区町村を選んでください');
+      await saveSettings({ defaultPlace: { pref, city } });
+      toast(`${pref}${city}を初期値にしました`);
+      refresh();
+    });
+  }).catch((e) => {
+    defCard.querySelector('.default-place-set').innerHTML = `<p class="muted small">${esc(e.message)}</p>`;
   });
 
   // よく使う市区町村: 都道府県 → 市区町村を選んで追加する
