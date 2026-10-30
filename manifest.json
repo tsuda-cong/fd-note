@@ -1,0 +1,19 @@
+{
+  "name": "野外奉仕記録",
+  "short_name": "奉仕記録",
+  "description": "野外奉仕の記録・訪問・聖書レッスンを端末の中だけで管理するアプリ",
+  "lang": "ja",
+  "dir": "ltr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef1f4",
+  "theme_color": "#0b5d8f",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
