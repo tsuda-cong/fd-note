@@ -69,6 +69,8 @@ async function route({ keepScroll = false } = {}) {
   if (my === seq) window.scrollTo(0, keepScroll ? scrollY : 0);
 }
 
+let updateRequested = false;
+
 function showUpdateBanner(worker) {
   const banner = document.getElementById('banner');
   banner.innerHTML = `
@@ -76,24 +78,33 @@ function showUpdateBanner(worker) {
       <span>新しい版があります</span>
       <button type="button" class="btn btn-primary">更新する</button>
     </div>`;
-  banner.querySelector('button').addEventListener('click', () => worker.postMessage('skipWaiting'));
+  banner.querySelector('button').addEventListener('click', () => {
+    updateRequested = true;
+    worker.postMessage('skipWaiting');
+  });
 }
 
 async function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   const hadController = !!navigator.serviceWorker.controller;
   let reloading = false;
+  // 初めて開いたときの取り込み（前の版がない）では開き直さない。「更新する」を押したときは開き直す。
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!hadController || reloading) return;
+    if ((!hadController && !updateRequested) || reloading) return;
     reloading = true;
     location.reload();
   });
   const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
-  // 新しい版は、起動時点で「待機中」「取り込み中」、または後から見つかる、のどれかになる
+  // 新しい版は、起動時点で「待機中」「取り込み中」、または後から見つかる、のどれかになる。
+  // いま動いている版（controller）があるときだけ、「更新」としてお知らせを出す。
+  const isUpdate = () => !!navigator.serviceWorker.controller;
   const track = (w) => {
-    if (!w || !hadController) return;
-    if (w.state === 'installed') showUpdateBanner(w);
-    else w.addEventListener('statechange', () => { if (w.state === 'installed') showUpdateBanner(w); });
+    if (!w) return;
+    if (w.state === 'installed') {
+      if (isUpdate()) showUpdateBanner(w);
+    } else {
+      w.addEventListener('statechange', () => { if (w.state === 'installed' && isUpdate()) showUpdateBanner(w); });
+    }
   };
   track(reg.waiting);
   track(reg.installing);

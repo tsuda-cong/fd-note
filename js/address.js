@@ -81,22 +81,9 @@ function prefOptions(muni, selected) {
   return options([['', '（都道府県を選ぶ）'], ...list], selected);
 }
 
-function cityOptions(muni, pref, selected, favorites) {
+function cityOptions(muni, pref, selected) {
   if (!pref) return '<option value="">（先に都道府県を選ぶ）</option>';
-  const all = muni.citiesOf(pref);
-  const favs = favorites.filter((f) => f.pref === pref && all.includes(f.city)).map((f) => f.city);
-  const head = options([['', '（市区町村を選ぶ）']], selected);
-  if (!favs.length) return head + options(all.map((c) => [c, c]), selected);
-  // よく使うものは上にも出す（同じ市区町村が2か所に並ぶので、選ばれた印は片方だけに付ける）
-  const favSelected = favs.includes(selected);
-  return `${head}<optgroup label="よく使う">${options(favs.map((c) => [c, c]), favSelected ? selected : '')}</optgroup>`
-    + `<optgroup label="すべての市区町村">${options(all.map((c) => [c, c]), favSelected ? '' : selected)}</optgroup>`;
-}
-
-function favoriteButtons(favorites) {
-  if (!favorites.length) return '';
-  return `<div class="chips fav-places" role="group" aria-label="よく使う市区町村">${favorites.map((f, i) =>
-    `<button type="button" class="chip" data-fav="${i}">${esc(f.pref)}${esc(f.city)}</button>`).join('')}</div>`;
+  return options([['', '（市区町村を選ぶ）'], ...muni.citiesOf(pref).map((c) => [c, c])], selected);
 }
 
 // 絞り込み用の正規化（全角・半角や「ヶ／ケ」の違いを同じに扱う）
@@ -105,16 +92,15 @@ function normalize(s) {
 }
 
 // 住所欄の HTML。値は初期値。muni は loadMunicipalities() の結果。
-// detail: false のときは都道府県・市区町村だけ（設定の「よく使う市区町村」の登録用）。
-export function addressFieldsHtml(muni, { pref = '', city = '', town = '', address = '' }, favorites = [],
+// detail: false のときは都道府県・市区町村だけ（設定の「住所の初期値」用）。
+export function addressFieldsHtml(muni, { pref = '', city = '', town = '', address = '' },
   { label = '住所', detail = true } = {}) {
   const manual = !!city && !muni.citiesOf(pref).includes(city);
   return `
     <fieldset class="field stack addr-fields" data-mode="${manual ? 'manual' : 'list'}">
       <legend>${label}</legend>
-      ${favoriteButtons(favorites)}
       <select name="pref" aria-label="都道府県">${prefOptions(muni, pref)}</select>
-      <select name="city" aria-label="市区町村" ${manual ? 'hidden' : ''} ${pref ? '' : 'disabled'}>${cityOptions(muni, pref, manual ? '' : city, favorites)}</select>
+      <select name="city" aria-label="市区町村" ${manual ? 'hidden' : ''} ${pref ? '' : 'disabled'}>${cityOptions(muni, pref, manual ? '' : city)}</select>
       <input type="text" name="cityManual" aria-label="市区町村（手入力）" placeholder="市区町村を入力" value="${manual ? esc(city) : ''}" ${manual ? '' : 'hidden'}>
       <button type="button" class="link-btn" data-action="city-mode">${manual ? '市区町村を一覧から選ぶ' : '一覧にないときは市区町村を手入力'}</button>
       ${detail ? `
@@ -129,7 +115,7 @@ export function addressFieldsHtml(muni, { pref = '', city = '', town = '', addre
 }
 
 // 住所欄の動き（都道府県を変えたら市区町村の選択肢を入れ替える、手入力への切り替え、町名の候補など）
-export function bindAddressFields(root, muni, favorites = []) {
+export function bindAddressFields(root, muni) {
   const box = root.querySelector('.addr-fields');
   const prefSel = box.querySelector('[name="pref"]');
   const citySel = box.querySelector('[name="city"]');
@@ -181,7 +167,7 @@ export function bindAddressFields(root, muni, favorites = []) {
     modeBtn.textContent = manual ? '市区町村を一覧から選ぶ' : '一覧にないときは市区町村を手入力';
   };
   const fillCities = (selected = '') => {
-    citySel.innerHTML = cityOptions(muni, prefSel.value, selected, favorites);
+    citySel.innerHTML = cityOptions(muni, prefSel.value, selected);
     citySel.disabled = !prefSel.value;
   };
 
@@ -196,17 +182,6 @@ export function bindAddressFields(root, muni, favorites = []) {
     updateTowns();
     (toManual ? cityText : citySel).focus();
   });
-  box.querySelector('.fav-places')?.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-fav]');
-    if (!b) return;
-    const f = favorites[Number(b.dataset.fav)];
-    prefSel.innerHTML = prefOptions(muni, f.pref);
-    fillCities(f.city);
-    setMode(false);
-    updateTowns();
-    (townInput || prefSel).focus();
-  });
-
   if (townInput) {
     townInput.addEventListener('focus', showTowns);
     townInput.addEventListener('input', showTowns);

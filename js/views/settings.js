@@ -1,4 +1,4 @@
-// 設定: 区分、名前、よく使う市区町村、色分けの基準、表示テーマ
+// 設定: 区分、名前、住所の初期値、色分けの基準、表示テーマ
 
 import { getSettings, saveSettings, getMeta } from '../db.js';
 import { formatDate } from '../dates.js';
@@ -56,16 +56,6 @@ export async function render(el) {
       ${s.defaultPlace ? '<button type="button" class="btn btn-block btn-ghost-danger" data-action="default-clear">初期値の指定をやめる</button>' : ''}
     </section>
 
-    <section class="card fav-card">
-      <h2>よく使う市区町村</h2>
-      <p class="muted small">登録すると、訪問の住所を入れるときに一番上に出て、1回押すだけで選べます。</p>
-      ${s.favoriteCities.length ? `<div class="chips">${s.favoriteCities.map((f, i) => `
-        <span class="chip on">${esc(f.pref)}${esc(f.city)}
-          <button type="button" class="chip-x" data-action="fav-del" data-i="${i}" aria-label="${esc(f.city)}を外す">×</button></span>`).join('')}</div>`
-        : '<p class="muted small">まだ登録していません。</p>'}
-      <div class="fav-add"></div>
-    </section>
-
     <nav class="card link-list">
       <a href="#/report">月の報告 <span>›</span></a>
       <a href="#/publications">出版物（配布の記録・レッスンの教材）<span>›</span></a>
@@ -112,7 +102,7 @@ export async function render(el) {
   loadMunicipalities().then((muni) => {
     const cur = s.defaultPlace || loadLastPlace() || { pref: '', city: '' };
     defCard.querySelector('.default-place-set').innerHTML = `
-      ${addressFieldsHtml(muni, cur, [], { label: '初期値にする市区町村', detail: false })}
+      ${addressFieldsHtml(muni, cur, { label: '初期値にする市区町村', detail: false })}
       <button type="button" class="btn btn-block" data-action="default-set">この市区町村を初期値にする</button>`;
     bindAddressFields(defCard, muni);
     defCard.querySelector('[data-action="default-set"]').addEventListener('click', async () => {
@@ -124,33 +114,6 @@ export async function render(el) {
     });
   }).catch((e) => {
     defCard.querySelector('.default-place-set').innerHTML = `<p class="muted small">${esc(e.message)}</p>`;
-  });
-
-  // よく使う市区町村: 都道府県 → 市区町村を選んで追加する
-  const favCard = el.querySelector('.fav-card');
-  favCard.addEventListener('click', async (e) => {
-    const b = e.target.closest('[data-action="fav-del"]');
-    if (!b) return;
-    await saveSettings({ favoriteCities: s.favoriteCities.filter((_, i) => i !== Number(b.dataset.i)) });
-    toast('外しました');
-    refresh();
-  });
-  loadMunicipalities().then((muni) => {
-    const last = loadLastPlace();
-    favCard.querySelector('.fav-add').innerHTML = `
-      ${addressFieldsHtml(muni, { pref: last?.pref || '', city: '' }, [], { label: '追加する市区町村', detail: false })}
-      <button type="button" class="btn btn-block" data-action="fav-add">追加する</button>`;
-    bindAddressFields(favCard, muni);
-    favCard.querySelector('[data-action="fav-add"]').addEventListener('click', async () => {
-      const { pref, city } = readAddressFields(favCard);
-      if (!pref || !city) return toast('都道府県と市区町村を選んでください');
-      if (s.favoriteCities.some((f) => f.pref === pref && f.city === city)) return toast('すでに登録しています');
-      await saveSettings({ favoriteCities: [...s.favoriteCities, { pref, city }] });
-      toast(`${city}を登録しました`);
-      refresh();
-    });
-  }).catch((e) => {
-    favCard.querySelector('.fav-add').innerHTML = `<p class="muted small">${esc(e.message)}</p>`;
   });
 
   el.querySelector('[data-action="copy-url"]').addEventListener('click', async () => {

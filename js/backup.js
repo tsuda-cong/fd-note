@@ -1,6 +1,6 @@
 // バックアップファイル（JSON）の作成と読み込み
 
-import { loadAll, importSnapshot, setMeta, migrateData, getSettings, saveSettings, SCHEMA_VERSION, DATA_STORES } from './db.js';
+import { loadAll, importSnapshot, setMeta, migrateData, SCHEMA_VERSION, DATA_STORES } from './db.js';
 import { nowStamp } from './dates.js';
 
 export const STORE_LABELS = {
@@ -137,12 +137,4 @@ export async function decryptBackup(text, password) {
 
 export async function restoreBackup(data, mode) {
   await importSnapshot(data, mode);
-  // 「追加」では設定は今のままにするが、よく使う市区町村だけはファイルの分も足す
-  const incoming = data.settings?.favoriteCities || [];
-  if (mode === 'merge' && incoming.length) {
-    const { favoriteCities } = await getSettings();
-    const key = (f) => `${f.pref}\n${f.city}`;
-    const have = new Set(favoriteCities.map(key));
-    await saveSettings({ favoriteCities: [...favoriteCities, ...incoming.filter((f) => !have.has(key(f)))] });
-  }
 }

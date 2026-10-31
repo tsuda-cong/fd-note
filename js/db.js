@@ -9,7 +9,7 @@ import { nowStamp } from './dates.js';
 
 const DB_NAME = 'fd-note-db';
 const DB_VERSION = 2;
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 // 訪問先ごとの記録（personId を持つ）
 export const PERSON_STORES = [
@@ -41,7 +41,6 @@ export const DEFAULT_SETTINGS = {
   backupReminderDays: 14,  // 最終バックアップからこの日数以上で促す
   theme: 'auto',           // 'auto' | 'light' | 'dark'
   mapCenter: null,         // { lat, lng, zoom }
-  favoriteCities: [],      // よく使う市区町村 [{ pref, city }]（登録した順）
   defaultPlace: null,      // 新しい訪問の住所の初期値 { pref, city }（null なら前回選んだもの）
 };
 
@@ -116,6 +115,11 @@ const dataMigrations = {
     data.visitPublications ??= [];
     data.lessonMaterials ??= [];
     data.lessonProgress ??= [];
+    return data;
+  },
+  // 版6: 設定の「よく使う市区町村」をやめた（「住所の初期値」に一本化）。設定から項目を取り除く。
+  6: (data) => {
+    if (data.settings) delete data.settings.favoriteCities;
     return data;
   },
 };

@@ -26,7 +26,7 @@ export async function render(el, { params: [id] }) {
     return;
   }
   setTitle(editing ? '訪問先を編集' : '新しい訪問', editing ? `#/person/${id}` : '#/visits');
-  const [{ favoriteCities, defaultPlace }, muni, pubs, given] = await Promise.all([
+  const [{ defaultPlace }, muni, pubs, given] = await Promise.all([
     getSettings(),
     loadMunicipalities().catch((e) => { toast(e.message); return NO_LIST; }),
     editing ? [] : getAll('publications'),
@@ -45,7 +45,7 @@ export async function render(el, { params: [id] }) {
         <input type="text" name="name" value="${esc(p?.name)}" placeholder="わかる範囲で（空欄でも可）"></label>
       <fieldset class="field"><legend>性別</legend>
         <div class="segmented">${genderRadios(p?.gender ?? '')}</div></fieldset>
-      ${addressFieldsHtml(muni, initial, favoriteCities)}
+      ${addressFieldsHtml(muni, initial)}
       <label class="field"><span>メモ</span>
         <textarea name="memo" rows="3" placeholder="話した内容、関心など">${esc(p?.memo)}</textarea></label>
       ${editing ? '' : `
@@ -61,7 +61,7 @@ export async function render(el, { params: [id] }) {
     </form>`;
 
   const form = el.querySelector('form');
-  bindAddressFields(form, muni, favoriteCities);
+  bindAddressFields(form, muni);
   bindPubPicker(form, pickable);
 
   form.addEventListener('submit', async (e) => {

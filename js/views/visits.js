@@ -80,10 +80,10 @@ export async function render(el) {
   setTitle('訪問');
   const [all, settings] = await Promise.all([loadAll(), getSettings()]);
   const people = summarizePeople(all, settings);
-  // 絞り込み用の市区町村: よく使う市区町村を先に、残りは訪問先にあるものを五十音順で
-  const favs = settings.favoriteCities.map((f) => `${f.pref}${f.city}`);
-  const used = [...new Set(people.map(placeLabel).filter(Boolean))];
-  const places = [...favs.filter((f) => used.includes(f)), ...used.filter((u) => !favs.includes(u)).sort((a, b) => a.localeCompare(b, 'ja'))];
+  // 絞り込み用の市区町村: 住所の初期値を先に、残りは訪問先にあるものを五十音順で
+  const home = settings.defaultPlace ? `${settings.defaultPlace.pref}${settings.defaultPlace.city}` : '';
+  const used = [...new Set(people.map(placeLabel).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ja'));
+  const places = used.includes(home) ? [home, ...used.filter((u) => u !== home)] : used;
   const prefs = loadPrefs();
   if (!sorters[prefs.sort]) prefs.sort = 'recent';
   if (!matchers[prefs.filter]) prefs.filter = 'all';
