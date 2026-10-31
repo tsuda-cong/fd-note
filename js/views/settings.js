@@ -68,6 +68,7 @@ export async function render(el) {
 
     <nav class="card link-list">
       <a href="#/report">月の報告 <span>›</span></a>
+      <a href="#/publications">出版物（配布の記録・レッスンの教材）<span>›</span></a>
       <a href="#/backup">バックアップ（書き出し・読み込み）<small>${lastBackup ? `最終 ${formatDate(lastBackup.slice(0, 10))}` : 'まだありません'}</small><span>›</span></a>
       <a href="#/help">使い方・注意事項 <span>›</span></a>
     </nav>

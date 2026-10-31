@@ -12,6 +12,7 @@ import * as map from './views/map.js';
 import * as settings from './views/settings.js';
 import * as backup from './views/backup.js';
 import * as help from './views/help.js';
+import * as publications from './views/publications.js';
 
 // 画面を増やすときは、ここに1行足して views/ にファイルを追加する
 const routes = [
@@ -26,6 +27,7 @@ const routes = [
   { re: /^\/settings$/, view: settings, tab: 'settings' },
   { re: /^\/backup$/, view: backup, tab: 'settings' },
   { re: /^\/help$/, view: help, tab: 'settings' },
+  { re: /^\/publications$/, view: publications, tab: 'settings' },
 ];
 
 let cleanup = null;

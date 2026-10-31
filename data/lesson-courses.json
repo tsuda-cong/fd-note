@@ -1,0 +1,21 @@
+{
+ "note": "レッスン型の教材の構成。番号とセクションの区切りだけを持つ（見出しの文言は入れない）。sameAs は、そのレッスンが別の構成の同じ番号のレッスンと同じ内容であることを示す（教材を変えるときの引き継ぎに使う）。points は各レッスンのポイント数（例 {\"L01\": 5}）。まだ入れていないので、入れれば全ポイントに対する進み具合も出せる。",
+ "courses": {
+  "book": {
+   "sections": [
+    { "no": 1, "from": 1, "to": 12, "review": true },
+    { "no": 2, "from": 13, "to": 33, "review": true },
+    { "no": 3, "from": 34, "to": 47, "review": true },
+    { "no": 4, "from": 48, "to": 60, "review": true }
+   ],
+   "points": {}
+  },
+  "booklet": {
+   "sections": [
+    { "no": null, "from": 1, "to": 3, "review": false }
+   ],
+   "sameAs": "book",
+   "points": {}
+  }
+ }
+}

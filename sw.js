@@ -6,7 +6,7 @@
 //      （町名データ towns/*.json は towns/index.json に載っているものを自動で保存するので、ここに足さなくてよい）
 //   3. push すると、利用者の画面に「新しい版があります」と出て切り替わる
 
-const VERSION = '1.3.1';
+const VERSION = '1.4.0';
 const CACHE_PREFIX = 'fd-note-';
 const CACHE = `${CACHE_PREFIX}v${VERSION}`;
 
@@ -15,8 +15,10 @@ const ASSETS = [
   './index.html',
   './manifest.json',
   './css/style.css',
+  './data/lesson-courses.json',
   './data/municipalities.json',
   './js/address.js',
+  './js/publications.js',
   './js/app.js',
   './js/backup.js',
   './js/calc.js',
@@ -30,6 +32,7 @@ const ASSETS = [
   './js/views/map.js',
   './js/views/person-form.js',
   './js/views/person.js',
+  './js/views/publications.js',
   './js/views/record.js',
   './js/views/report.js',
   './js/views/settings.js',

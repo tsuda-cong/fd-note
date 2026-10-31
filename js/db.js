@@ -8,13 +8,30 @@
 import { nowStamp } from './dates.js';
 
 const DB_NAME = 'fd-note-db';
-const DB_VERSION = 1;
-export const SCHEMA_VERSION = 4;
+const DB_VERSION = 2;
+export const SCHEMA_VERSION = 5;
 
 // 訪問先ごとの記録（personId を持つ）
-export const PERSON_STORES = ['visits', 'plans', 'lessonSchedules', 'lessonRecords'];
+export const PERSON_STORES = [
+  'visits', 'plans', 'lessonSchedules', 'lessonRecords',
+  'visitPublications', 'lessonMaterials', 'lessonProgress',
+];
 // バックアップの対象（settings は別扱い）
-export const DATA_STORES = ['serviceTimes', 'otherTimes', 'people', ...PERSON_STORES];
+export const DATA_STORES = ['serviceTimes', 'otherTimes', 'people', 'publications', ...PERSON_STORES];
+
+// 出版物の初期登録。id を決めておき、同じバックアップを何度読み込んでも重複しないようにする。
+// 名称・並び順・使用中かどうかは、利用者が設定で変えられる。
+export const SEED_PUBLICATIONS = [
+  { id: 'pub-seed-1', name: '「暮」冊子', kind: 'lesson', course: 'booklet', isMaterial: true, order: 1, active: true },
+  { id: 'pub-seed-2', name: '「暮」書籍', kind: 'lesson', course: 'book', isMaterial: true, order: 2, active: true },
+  { id: 'pub-seed-3', name: '「塔」', kind: 'yearNo', course: null, isMaterial: false, order: 3, active: true },
+  { id: 'pub-seed-4', name: '「目」', kind: 'yearNo', course: null, isMaterial: false, order: 4, active: true },
+];
+
+function seedPublications(existing = []) {
+  const have = new Set(existing.map((p) => p.id));
+  return SEED_PUBLICATIONS.filter((p) => !have.has(p.id)).map((p) => ({ ...p, createdAt: nowStamp() }));
+}
 
 export const DEFAULT_SETTINGS = {
   key: 'main',
@@ -37,7 +54,17 @@ const structureUpgrades = {
       db.createObjectStore(name, { keyPath: 'id' }).createIndex('date', 'date');
     }
     db.createObjectStore('people', { keyPath: 'id' });
-    for (const name of PERSON_STORES) {
+    for (const name of ['visits', 'plans', 'lessonSchedules', 'lessonRecords']) {
+      db.createObjectStore(name, { keyPath: 'id' }).createIndex('personId', 'personId');
+    }
+  },
+  // 出版物、配布の記録、レッスンの教材と進み具合
+  2(db) {
+    db.createObjectStore('publications', { keyPath: 'id' });
+    const vp = db.createObjectStore('visitPublications', { keyPath: 'id' });
+    vp.createIndex('personId', 'personId');
+    vp.createIndex('visitId', 'visitId');
+    for (const name of ['lessonMaterials', 'lessonProgress']) {
       db.createObjectStore(name, { keyPath: 'id' }).createIndex('personId', 'personId');
     }
   },
@@ -76,6 +103,21 @@ const dataMigrations = {
     for (const p of data.people) p.town ??= '';
     return data;
   },
+  // 版5: 出版物と、聖書レッスンの教材・進み具合を追加。
+  //   実施記録に教材(publicationId)・扱ったレッスン(item)・ポイント(point)の欄を足す（これまでの記録は空のまま）。
+  //   出版物は初期登録の4つを入れる。配布の記録・教材・進み具合は空から始める。
+  5: (data) => {
+    for (const r of data.lessonRecords) {
+      r.publicationId ??= null;
+      r.item ??= null;
+      r.point ??= null;
+    }
+    data.publications = [...(data.publications || []), ...seedPublications(data.publications)];
+    data.visitPublications ??= [];
+    data.lessonMaterials ??= [];
+    data.lessonProgress ??= [];
+    return data;
+  },
 };
 
 export function migrateData(data, fromVersion) {
@@ -112,7 +154,11 @@ async function readSnapshot(db) {
 }
 
 // mode: 'replace' は全部消してから書き込み（設定も置き換え）、'merge' は同じ id を上書きして追加
+//   ただし 'merge' の出版物は、手元にある id はそのまま残す（設定で変えた名称などを古いファイルで上書きしない）
 async function writeSnapshot(db, data, mode) {
+  const keepPubs = mode === 'merge'
+    ? new Set(await reqP(db.transaction('publications').objectStore('publications').getAllKeys()))
+    : new Set();
   const tx = db.transaction(['settings', ...DATA_STORES], 'readwrite');
   const finished = done(tx);
   if (mode === 'replace') {
@@ -122,7 +168,10 @@ async function writeSnapshot(db, data, mode) {
   }
   for (const name of DATA_STORES) {
     const store = tx.objectStore(name);
-    for (const rec of data[name] || []) store.put(rec);
+    for (const rec of data[name] || []) {
+      if (name === 'publications' && keepPubs.has(rec.id)) continue;
+      store.put(rec);
+    }
   }
   await finished;
 }
@@ -138,7 +187,9 @@ async function migrateStoredData(db) {
     const snap = await readSnapshot(db);
     await writeSnapshot(db, migrateData(snap, current), 'replace');
   }
-  const tx = db.transaction('meta', 'readwrite');
+  const tx = db.transaction(['meta', 'publications'], 'readwrite');
+  // 初めて使う端末（データなし）にも、出版物の初期登録を入れる
+  if (current == null) for (const p of seedPublications()) tx.objectStore('publications').put(p);
   tx.objectStore('meta').put({ key: 'schemaVersion', value: SCHEMA_VERSION });
   await done(tx);
 }

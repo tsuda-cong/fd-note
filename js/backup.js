@@ -11,6 +11,10 @@ export const STORE_LABELS = {
   lessonRecords: 'レッスンの実施記録',
   serviceTimes: '奉仕時間の記録',
   otherTimes: '野外奉仕以外の時間',
+  publications: '出版物',
+  visitPublications: '渡した出版物の記録',
+  lessonMaterials: 'レッスンの教材',
+  lessonProgress: 'レッスンの進み具合',
 };
 
 export async function buildBackupFile() {
