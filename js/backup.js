@@ -56,6 +56,85 @@ export function parseBackup(text) {
   return { exportedAt: typeof obj.exportedAt === 'string' ? obj.exportedAt : '', data: migrateData(data, obj.schemaVersion) };
 }
 
+// ---- パスワードによる暗号化 ----
+// 端末のブラウザに入っている Web Crypto だけを使う（外部への通信なし）。
+//   鍵: パスワードから PBKDF2（SHA-256）で作る。総当たりで試されにくいよう、わざと時間がかかる回数にする。
+//   暗号: AES-GCM 256bit。パスワードが違えば復号に失敗する（改ざんも検出できる）。
+// パスワードはどこにも保存しない。
+const KDF_ITERATIONS = 600000;
+const utf8 = new TextEncoder();
+
+function toBase64(buf) {
+  const bytes = new Uint8Array(buf);
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+
+function fromBase64(str) {
+  const s = atob(str);
+  const bytes = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) bytes[i] = s.charCodeAt(i);
+  return bytes;
+}
+
+// 全角・半角の違い（「１２３」と「123」など）で戻せなくならないよう、NFKC でそろえてから使う
+function normalizePassword(pw) {
+  return pw.normalize('NFKC');
+}
+
+export function canEncrypt() {
+  return !!globalThis.crypto?.subtle;
+}
+
+async function deriveKey(password, salt, iterations) {
+  const base = await crypto.subtle.importKey('raw', utf8.encode(normalizePassword(password)), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations },
+    base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'],
+  );
+}
+
+// 書き出したバックアップ（JSON の文字列）を、パスワード付きのファイルの中身にする
+export async function encryptBackup(json, password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(password, salt, KDF_ITERATIONS);
+  const data = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, utf8.encode(json));
+  return JSON.stringify({
+    app: 'fd-note',
+    encrypted: true,
+    format: 1,
+    kdf: { name: 'PBKDF2', hash: 'SHA-256', iterations: KDF_ITERATIONS, salt: toBase64(salt) },
+    cipher: { name: 'AES-GCM', iv: toBase64(iv) },
+    data: toBase64(data),
+  });
+}
+
+export function isEncryptedBackup(text) {
+  try {
+    const obj = JSON.parse(text);
+    return obj?.app === 'fd-note' && obj.encrypted === true;
+  } catch {
+    return false;
+  }
+}
+
+// パスワード付きのファイルを元のバックアップ（JSON の文字列）に戻す。違うパスワードなら Error。
+export async function decryptBackup(text, password) {
+  const obj = JSON.parse(text);
+  if (obj.format !== 1 || obj.kdf?.name !== 'PBKDF2' || obj.cipher?.name !== 'AES-GCM') {
+    throw new Error('このアプリの新しい版で作られたファイルかもしれません。アプリを最新にしてから読み込んでください。');
+  }
+  const key = await deriveKey(password, fromBase64(obj.kdf.salt), obj.kdf.iterations);
+  try {
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromBase64(obj.cipher.iv) }, key, fromBase64(obj.data));
+    return new TextDecoder().decode(plain);
+  } catch {
+    throw new Error('パスワードが違います（またはファイルが壊れています）。');
+  }
+}
+
 export async function restoreBackup(data, mode) {
   await importSnapshot(data, mode);
   // 「追加」では設定は今のままにするが、よく使う市区町村だけはファイルの分も足す

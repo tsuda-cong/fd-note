@@ -70,6 +70,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
@@ -228,7 +229,7 @@ h2 small, h3 small, h4 small { font-weight: normal; font-size: 0.85rem; color: v
 }
 .field.inline { display: flex; align-items: center; gap: 10px; margin: 10px 0 0; }
 .field.inline > span:first-child { margin: 0; white-space: nowrap; }
-input[type="text"], input[type="search"], input[type="number"], input[type="date"], input[type="time"], select, textarea {
+input[type="text"], input[type="search"], input[type="number"], input[type="password"], input[type="date"], input[type="time"], select, textarea {
   width: 100%;
   min-height: 50px;
   padding: 10px 12px;
@@ -631,3 +632,10 @@ table.calc tr.carry th, table.calc tr.carry td { color: var(--primary); font-wei
 .modal-msg { margin: 0 0 8px; font-weight: 800; font-size: 1.08rem; white-space: pre-wrap; }
 .modal-detail { margin: 0 0 12px; color: var(--muted); white-space: pre-wrap; }
 .modal-actions { display: grid; gap: 8px; margin-top: 14px; }
+.modal input[type="password"] { margin-top: 4px; }
+
+.pw-box > input + input { margin-top: 8px; }
+.pw-box .check { margin: 6px 0 0; }
+.pw-box .note { margin: 8px 0; }
+.pw-status { margin: 8px 0 0; font-weight: 700; color: var(--primary); }
+.pw-status:empty { display: none; }

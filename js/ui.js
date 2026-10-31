@@ -57,6 +57,36 @@ export function choose(message, options, { detail = '' } = {}) {
   });
 }
 
+// パスワードを聞く（キャンセルなら null）
+export function askPassword(message, { detail = '', ok = 'OK' } = {}) {
+  return new Promise((resolve) => {
+    const back = document.createElement('div');
+    back.className = 'modal-back';
+    back.innerHTML = `
+      <form class="modal" role="dialog" aria-modal="true" autocomplete="off">
+        <p class="modal-msg">${esc(message)}</p>
+        ${detail ? `<p class="modal-detail">${esc(detail)}</p>` : ''}
+        <input type="password" name="pw" aria-label="パスワード" autocomplete="off">
+        <div class="modal-actions">
+          <button class="btn btn-block btn-primary">${esc(ok)}</button>
+          <button type="button" class="btn btn-block" data-cancel>キャンセル</button>
+        </div>
+      </form>`;
+    const close = (v) => {
+      back.remove();
+      resolve(v);
+    };
+    const form = back.querySelector('form');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      close(form.pw.value);
+    });
+    back.querySelector('[data-cancel]').addEventListener('click', () => close(null));
+    document.body.append(back);
+    form.pw.focus();
+  });
+}
+
 export async function confirmDialog(message, { ok = 'OK', danger = false, detail = '' } = {}) {
   const v = await choose(message, [
     { label: ok, value: true, cls: danger ? 'btn-danger' : 'btn-primary' },
