@@ -3,7 +3,7 @@
 import { getSettings, saveSettings, getMeta } from '../db.js';
 import { formatDate } from '../dates.js';
 import { USER_TYPES } from '../model.js';
-import { setTitle, esc, toast, applyTheme, copyText, loadScript, refresh } from '../ui.js';
+import { setTitle, esc, toast, applyTheme, refresh } from '../ui.js';
 import { loadMunicipalities, loadLastPlace, addressFieldsHtml, bindAddressFields, readAddressFields } from '../address.js';
 
 const THEMES = [['auto', '端末に合わせる'], ['light', '明るい'], ['dark', '暗い']];
@@ -20,8 +20,6 @@ async function appVersion() {
 export async function render(el) {
   setTitle('設定');
   const [s, lastBackup, version] = await Promise.all([getSettings(), getMeta('lastBackupAt'), appVersion()]);
-  // 公開している場所の URL（決め打ちにせず、いま開いている場所から求める）
-  const appUrl = new URL('./', location.href).href;
 
   el.innerHTML = `
     <form class="card" data-form="settings" autocomplete="off">
@@ -62,14 +60,6 @@ export async function render(el) {
       <a href="#/backup">バックアップ（書き出し・読み込み）<small>${lastBackup ? `最終 ${formatDate(lastBackup.slice(0, 10))}` : 'まだありません'}</small><span>›</span></a>
       <a href="#/help">使い方・注意事項 <span>›</span></a>
     </nav>
-
-    <section class="card">
-      <h2>このアプリを人に教える</h2>
-      <p class="muted small">相手のスマホのカメラでこの QR コードを読み取ってもらうと、このアプリのページが開きます。伝わるのはアプリの URL だけで、あなたの記録は渡りません。</p>
-      <div class="qr" role="img" aria-label="このアプリの URL の QR コード"></div>
-      <p class="qr-url">${esc(appUrl)}</p>
-      <button type="button" class="btn btn-block" data-action="copy-url">URL をコピー</button>
-    </section>
 
     <p class="muted small center">野外奉仕記録 ${version ? `バージョン ${esc(version)}` : ''}<br>データはこの端末の中にだけ保存されます。</p>`;
 
@@ -115,19 +105,4 @@ export async function render(el) {
   }).catch((e) => {
     defCard.querySelector('.default-place-set').innerHTML = `<p class="muted small">${esc(e.message)}</p>`;
   });
-
-  el.querySelector('[data-action="copy-url"]').addEventListener('click', async () => {
-    toast((await copyText(appUrl)) ? 'URL をコピーしました' : 'コピーできませんでした');
-  });
-
-  const qrBox = el.querySelector('.qr');
-  try {
-    const qrcode = await loadScript('./vendor/qrcode-generator/qrcode.js', 'qrcode');
-    const qr = qrcode(0, 'M');
-    qr.addData(appUrl);
-    qr.make();
-    qrBox.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 16, scalable: true });
-  } catch {
-    qrBox.innerHTML = '<p class="muted small">QR コードを表示できませんでした。上の URL を伝えてください。</p>';
-  }
 }

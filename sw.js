@@ -6,7 +6,7 @@
 //      （町名データ towns/*.json は towns/index.json に載っているものを自動で保存するので、ここに足さなくてよい）
 //   3. push すると、利用者の画面に「新しい版があります」と出て切り替わる
 
-const VERSION = '1.4.2';
+const VERSION = '1.4.3';
 const CACHE_PREFIX = 'fd-note-';
 const CACHE = `${CACHE_PREFIX}v${VERSION}`;
 
@@ -44,7 +44,6 @@ const ASSETS = [
   './vendor/leaflet/images/marker-icon.png',
   './vendor/leaflet/images/marker-icon-2x.png',
   './vendor/leaflet/images/marker-shadow.png',
-  './vendor/qrcode-generator/qrcode.js',
   './icons/icon-180.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
