@@ -1,6 +1,6 @@
 // 設定: 区分、名前、住所の初期値、色分けの基準、表示テーマ
 
-import { getSettings, saveSettings, getMeta } from '../db.js';
+import { getSettings, saveSettings, getMeta, TIME_STEPS } from '../db.js';
 import { formatDate } from '../dates.js';
 import { USER_TYPES } from '../model.js';
 import { setTitle, esc, toast, applyTheme, refresh } from '../ui.js';
@@ -33,6 +33,11 @@ export async function render(el) {
       </div>
       <label class="field"><span>名前（報告用の文章に入ります。空欄でもかまいません）</span>
         <input type="text" name="name" value="${esc(s.name)}"></label>
+      <fieldset class="field"><legend>奉仕時間を入れるときの分の刻み（開拓者の方のみ使います）</legend>
+        <div class="segmented">
+          ${TIME_STEPS.map((m) => `<label><input type="radio" name="timeStep" value="${m}" ${s.timeStep === m ? 'checked' : ''}><span>${m}分</span></label>`).join('')}
+        </div>
+      </fieldset>
 
       <h2>表示</h2>
       <fieldset class="field"><legend>画面の明るさ</legend>
@@ -74,6 +79,7 @@ export async function render(el) {
     const next = await saveSettings({
       userType: USER_TYPES[fd.get('userType')] ? fd.get('userType') : null,
       name: String(fd.get('name') || '').trim(),
+      timeStep: TIME_STEPS.includes(Number(fd.get('timeStep'))) ? Number(fd.get('timeStep')) : s.timeStep,
       theme: String(fd.get('theme') || 'auto'),
       staleDays: num('staleDays', s.staleDays),
       backupReminderDays: num('backupReminderDays', s.backupReminderDays),

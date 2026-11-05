@@ -1,13 +1,14 @@
 // 奉仕の記録: 奉仕時間（開拓者）と野外奉仕以外の時間（正規開拓者）
 
-import { loadAll, getSettings, put, remove, newRecord } from '../db.js';
+import { loadAll, getSettings, put, remove, newRecord, TIME_STEPS } from '../db.js';
 import { todayStr, currentYm, isYm, isDateStr, addMonths, formatYm, formatDate } from '../dates.js';
 import { typeInfo } from '../model.js';
 import { formatMinutes } from '../calc.js';
 import { setTitle, esc, toast, confirmDialog, refresh, options } from '../ui.js';
 
 const HOUR_OPTS = Array.from({ length: 13 }, (_, i) => [i, String(i)]);
-const MIN_OPTS = Array.from({ length: 12 }, (_, i) => [i * 5, String(i * 5)]);
+// 分の選択肢は、設定の「分の刻み」（1・5・10・15分）に合わせる
+const minuteOptions = (step) => Array.from({ length: 60 / step }, (_, i) => [i * step, String(i * step)]);
 const OTHER_HOUR_OPTS = Array.from({ length: 12 }, (_, i) => [i + 1, String(i + 1)]);
 
 function monthNav(ym) {
@@ -50,7 +51,7 @@ export async function render(el, { query }) {
       <div class="field"><span>時間</span>
         <div class="hm">
           <select name="h" aria-label="時間">${options(HOUR_OPTS, 1)}</select><span>時間</span>
-          <select name="m" aria-label="分">${options(MIN_OPTS, 0)}</select><span>分</span>
+          <select name="m" aria-label="分">${options(minuteOptions(TIME_STEPS.includes(settings.timeStep) ? settings.timeStep : 5), 0)}</select><span>分</span>
         </div>
       </div>
       <label class="field"><span>メモ（任意）</span><input type="text" name="memo" autocomplete="off"></label>

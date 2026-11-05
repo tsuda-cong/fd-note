@@ -42,7 +42,10 @@ export const DEFAULT_SETTINGS = {
   theme: 'auto',           // 'auto' | 'light' | 'dark'
   mapCenter: null,         // { lat, lng, zoom }
   defaultPlace: null,      // 新しい訪問の住所の初期値 { pref, city }（null なら前回選んだもの）
+  timeStep: 5,             // 奉仕時間を入れるときの分の刻み（TIME_STEPS のどれか）
 };
+
+export const TIME_STEPS = [1, 5, 10, 15];
 
 // ストア構成の変更。キーの版へ上げるときに実行される。
 const structureUpgrades = {
